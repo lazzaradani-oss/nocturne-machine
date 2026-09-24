@@ -2,6 +2,12 @@
 
 An experimental interactive web experience exploring atmosphere, motion, light, and playful interaction.
 
+## Build Guide
+
+For the complete build process, architecture, and implementation reference:
+
+[**Read the Nocturne Machine Build Guide (PDF)**]([./docs/NOCTURNE-MACHINE-BUILD-GUIDE.pdf](https://docs.google.com/document/d/1zUw3j26KdhNPG_u5rCANwh4fUqY5pD2SodIP7bKbqIc/edit?usp=sharing))
+
 ## Concept
 
 The Nocturne Machine is an atmospheric interactive environment built around a luminous central machine that responds to human presence.
