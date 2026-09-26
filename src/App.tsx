@@ -55,7 +55,7 @@ const faqItems = [
   {
     question: "Could these interactions be used elsewhere?",
     answer:
-      "Yes. The exact same interaction system could become a reusable mechanic for games, animation, and interactive storytelling. Touch-to-Awaken could activate objects, characters, memories, or environments, while Slide-for-Colors could reveal hidden matter, memories, or space, and Double-Tap-to-Disturb could trigger hidden reactions or interruptions.",
+      "Yes. The exact same interaction system could become a reusable mechanic for games, animation, and interactive storytelling. Touch-to-Awaken could activate objects, characters, memories, or environments, while Telepathic Connection could make characters, objects, or environments respond to attention, movement, or inferred intent, and Double-Tap-to-Disturb could trigger hidden reactions or interruptions.",
   },
   {
     question: "What was the idea behind it?",
@@ -75,6 +75,11 @@ function App() {
   const [mode, setMode] = useState<Mode>("awaken");
   const [telepathyLevel, setTelepathyLevel] = useState(0);
   const [telepathyMessage, setTelepathyMessage] = useState("");
+  const [faqOpen, setFaqOpen] = useState(false);
+  const [wakeCount, setWakeCount] = useState(0);
+  const [disturbCount, setDisturbCount] = useState(0);
+  const [machineComment, setMachineComment] = useState("");
+  const wakeTimer = useRef<number | null>(null);
   const tapTimer = useRef<number | null>(null);
   const tapCount = useRef(0);
   const telepathyNearCount = useRef(0);
@@ -316,8 +321,8 @@ function App() {
               <span>Touch-to-Awaken</span>
               <small>Wake it gently.</small>
             </button>
-            <button type="button" className={mode === "telepathic" ? "is-selected" : ""} onClick={() => chooseMode("colors")}>
-              <span>Slide-for-Colors</span>
+            <button type="button" className={mode === "telepathic" ? "is-selected" : ""} onClick={() => chooseMode("telepathic")}>
+              <span>Telepathic Connection</span>
               <small>Think at it. See what happens.</small>
             </button>
             <button type="button" className={mode === "disturb" ? "is-selected" : ""} onClick={() => chooseMode("disturb")}>
@@ -345,15 +350,15 @@ function App() {
       <div className="status">
         <span className="status-dot" />
         <span>
-          {disturbCount > 0 && mode === "disturb"
-            ? "DISTURBED"
-            : mode === "telepathic"
+          {mode === "telepathic" && telepathyLevel >= 6
+            ? "CONNECTION ESTABLISHED"
+            : mode === "telepathic" && telepathyLevel > 0
               ? "SIGNAL RETURNED"
-: disturbCount > 0 && mode === "disturb"
-              ? "DISTURBED"
-              : awake
-                ? "SIGNAL DETECTED"
-                : "STANDBY"}
+              : disturbCount > 0 && mode === "disturb"
+                ? "DISTURBED"
+                : awake
+                  ? "SIGNAL DETECTED"
+                  : "STANDBY"}
         </span>
       </div>
 
