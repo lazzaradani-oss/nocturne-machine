@@ -302,7 +302,7 @@ function App() {
 
   return (
     <main
-      className={`nocturne ${awake ? "is-awake" : ""} ${mode === "distort" && distorting ? "is-distorting" : ""} ${discovery !== "none" ? "is-discovering" : ""}`}
+      className={`nocturne ${awake ? "is-awake" : ""} ${discovery !== "none" ? "is-discovering" : ""}`}
       style={rootStyle}
     >
       <div className="atmosphere atmosphere-one" />
