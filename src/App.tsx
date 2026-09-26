@@ -11,7 +11,7 @@ type Particle = {
   drift: number;
 };
 
-type Mode = "awaken" | "colors" | "listen" | "disturb";
+type Mode = "awaken" | "colors" | "disturb";
 
 const particles: Particle[] = Array.from(
   { length: 60 },
@@ -43,11 +43,6 @@ const faqItems = [
       "A discovery interaction that lets you uncover colors hidden beneath the orb—first cold blue, then, more rarely, strange pink.",
   },
   {
-    question: "What is Hold-to-Listen?",
-    answer:
-      "A discovery interaction that rewards staying with the machine. Press and hold the orb and its response changes the longer you stay.",
-  },
-  {
     question: "Is it a game?",
     answer:
       "Not exactly. It is a prototype of an interaction system that could become a mechanic for a game, animation, or interactive story.",
@@ -60,7 +55,7 @@ const faqItems = [
   {
     question: "Could this interaction system be used elsewhere?",
     answer:
-      "Yes. The exact same interaction system could become a reusable mechanic for games, animation, and interactive storytelling. Touch-to-Awaken could activate objects, characters, memories, or environments, while Slide-for-Colors and Hold-to-Listen could become mechanics for revealing and sensing matter, reality, memories, or space, while Double-Tap-to-Disturb could trigger hidden reactions or interruptions.",
+      "Yes. The exact same interaction system could become a reusable mechanic for games, animation, and interactive storytelling. Touch-to-Awaken could activate objects, characters, memories, or environments, while Slide-for-Colors could reveal hidden matter, memories, or space, and Double-Tap-to-Disturb could trigger hidden reactions or interruptions.",
   },
   {
     question: "What was the idea behind it?",
@@ -83,14 +78,12 @@ function App() {
   const [discovery, setDiscovery] = useState<"none" | "blue" | "pink">("none");
   const [faqOpen, setFaqOpen] = useState(false);
   const [wakeCount, setWakeCount] = useState(0);
-  const [listenTime, setListenTime] = useState(0);
   const [disturbCount, setDisturbCount] = useState(0);
   const [machineComment, setMachineComment] = useState("");
   const wakeTimer = useRef<number | null>(null);
   const distortionTimer = useRef<number | null>(null);
   const dragStart = useRef(0);
   const lastPoint = useRef({ x: 0, y: 0 });
-  const listenTimer = useRef<number | null>(null);
   const tapTimer = useRef<number | null>(null);
   const tapCount = useRef(0);
 
@@ -131,7 +124,7 @@ function App() {
     return () => {
       if (wakeTimer.current) window.clearTimeout(wakeTimer.current);
       if (distortionTimer.current) window.clearTimeout(distortionTimer.current);
-      if (listenTimer.current) window.clearInterval(listenTimer.current);
+      if (tapTimer.current) window.clearTimeout(tapTimer.current);
     };
   }, []);
 
@@ -157,24 +150,6 @@ function App() {
   const handleOrbPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (mode === "awaken") {
       handleWake();
-      return;
-    }
-
-    if (mode === "listen") {
-      if (listenTimer.current) window.clearInterval(listenTimer.current);
-      setAwake(true);
-      setListenTime(0);
-      setMachineComment("you're listening.");
-      listenTimer.current = window.setInterval(() => {
-        setListenTime((time) => {
-          const next = time + 1;
-          if (next === 2) setMachineComment("stay.");
-          if (next === 4) setMachineComment("longer.");
-          if (next === 6) setMachineComment("oh. you noticed that.");
-          if (next >= 9) setMachineComment("you stayed.");
-          return next;
-        });
-      }, 500);
       return;
     }
 
@@ -209,15 +184,6 @@ function App() {
     setDistorting(true);
     setDiscovery("none");
     setMachineComment("you found the cold one");
-  };
-
-  const handleOrbPointerUp = () => {
-    if (mode !== "listen") return;
-    if (listenTimer.current) window.clearInterval(listenTimer.current);
-    listenTimer.current = null;
-    setListenTime(0);
-    setAwake(false);
-    setMachineComment("you can let go now");
   };
 
   const handleOrbPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -260,14 +226,12 @@ function App() {
   };
 
   const chooseMode = (nextMode: Mode) => {
-    if (listenTimer.current) window.clearInterval(listenTimer.current);
     if (tapTimer.current) window.clearTimeout(tapTimer.current);
     tapCount.current = 0;
     setMode(nextMode);
     setDistorting(false);
     setDistortion({ x: 0, y: 0, strength: 0 });
     setDiscovery("none");
-    setListenTime(0);
     setDisturbCount(0);
     setAwake(false);
     setMachineComment(
@@ -275,9 +239,7 @@ function App() {
         ? "approach it. see what happens."
         : nextMode === "colors"
           ? "find what is underneath"
-          : nextMode === "listen"
-            ? "stay with it."
-            : "go ahead. knock.",
+          : "go ahead. knock.",
     );
   };
 
@@ -291,7 +253,6 @@ function App() {
 
   const machineClass = [
     "machine",
-    mode === "listen" && awake ? "is-listening" : "",
     mode === "disturb" && awake ? "is-disturbing" : "",
     mode === "colors" && distorting ? "is-sliding-colors" : "",
     discovery === "blue" ? "has-blue-discovery" : "",
@@ -340,14 +301,12 @@ function App() {
               ? "Touch to awaken the Nocturne Machine"
               : mode === "colors"
                 ? "Slide across the orb to reveal hidden colors"
-                : mode === "listen"
-                  ? "Press and hold the orb to stay with it"
-                  : "Tap the orb twice to disturb it"
+                : "Tap the orb twice to disturb it"
           }
           onPointerDown={handleOrbPointerDown}
           onPointerMove={handleOrbPointerMove}
-          onPointerUp={mode === "listen" ? handleOrbPointerUp : releaseDistortion}
-          onPointerCancel={mode === "listen" ? handleOrbPointerUp : releaseDistortion}
+          onPointerUp={mode === "colors" ? releaseDistortion : undefined}
+          onPointerCancel={mode === "colors" ? releaseDistortion : undefined}
           onKeyDown={(event) => {
             if ((event.key === "Enter" || event.key === " ") && mode === "awaken") {
               event.preventDefault();
@@ -407,10 +366,6 @@ function App() {
               <span>Slide-for-Colors</span>
               <small>Find what is underneath.</small>
             </button>
-            <button type="button" className={mode === "listen" ? "is-selected" : ""} onClick={() => chooseMode("listen")}>
-              <span>Hold-to-Listen</span>
-              <small>Stay with it.</small>
-            </button>
             <button type="button" className={mode === "disturb" ? "is-selected" : ""} onClick={() => chooseMode("disturb")}>
               <span>Double-Tap-to-Disturb</span>
               <small>Knock twice.</small>
@@ -420,7 +375,7 @@ function App() {
 
         <div className="interface-bottom">
           <span>
-            {mode === "awaken" ? "TOUCH / CLICK" : mode === "colors" ? "SLIDE / REVEAL" : mode === "listen" ? "HOLD / STAY" : "TAP / TAP"}
+            {mode === "awaken" ? "TOUCH / CLICK" : mode === "colors" ? "SLIDE / REVEAL" : "TAP / TAP"}
           </span>
 
           <button className="faq-button" type="button" onClick={() => setFaqOpen(true)}>
@@ -438,17 +393,15 @@ function App() {
         <span>
           {disturbCount >= 3 && mode === "disturb"
             ? "NO RESPONSE"
-            : mode === "listen" && awake
-              ? "STAYING"
-              : distorting && mode === "colors"
-                ? "COLOR SIGNAL"
-                : discovery === "pink"
-                  ? "UNKNOWN STATE"
-                  : discovery === "blue"
-                    ? "HIDDEN LAYER"
-                    : awake
-                      ? "SIGNAL DETECTED"
-                      : "LISTENING"}
+            : distorting && mode === "colors"
+              ? "COLOR SIGNAL"
+              : discovery === "pink"
+                ? "UNKNOWN STATE"
+                : discovery === "blue"
+                  ? "HIDDEN LAYER"
+                  : awake
+                    ? "SIGNAL DETECTED"
+                    : "STANDBY"}
         </span>
       </div>
 
