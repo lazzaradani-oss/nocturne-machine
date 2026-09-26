@@ -11,7 +11,7 @@ type Particle = {
   drift: number;
 };
 
-type Mode = "awaken" | "colors" | "disturb";
+type Mode = "awaken" | "telepathic" | "disturb";
 
 const particles: Particle[] = Array.from(
   { length: 60 },
@@ -38,9 +38,9 @@ const faqItems = [
       "Start with Touch-to-Awaken. Touch or click the orb and see how it responds.",
   },
   {
-    question: "What is Slide-for-Colors?",
+    question: "What is Telepathic Connection?",
     answer:
-      "A discovery interaction that lets you uncover colors hidden beneath the orb—first cold blue, then, more rarely, strange pink.",
+      "A cursor-based interaction that lets the machine respond to your movements. At first it follows. Then it starts noticing patterns, anticipating you, and occasionally doing something you did not ask it to do.",
   },
   {
     question: "Is it a game?",
@@ -94,7 +94,7 @@ function App() {
 
       setPointer({ x: normalizedX, y: normalizedY });
 
-      if (mode === "colors" && distorting) {
+      if (mode === "telepathic" && distorting) {
         const delta = Math.hypot(
           event.clientX - lastPoint.current.x,
           event.clientY - lastPoint.current.y,
@@ -273,7 +273,7 @@ function App() {
   const machineClass = [
     "machine",
     mode === "disturb" && awake ? "is-disturbing" : "",
-    mode === "colors" && distorting ? "is-sliding-colors" : "",
+    mode === "telepathic" && distorting ? "is-sliding-colors" : "",
     discovery === "blue" ? "has-blue-discovery" : "",
     discovery === "pink" ? "has-pink-discovery" : "",
   ]
@@ -318,14 +318,14 @@ function App() {
           aria-label={
             mode === "awaken"
               ? "Touch to awaken the Nocturne Machine"
-              : mode === "colors"
+              : mode === "telepathic"
                 ? "Slide across the orb to reveal hidden colors"
                 : "Tap the orb twice to disturb it"
           }
           onPointerDown={handleOrbPointerDown}
           onPointerMove={handleOrbPointerMove}
-          onPointerUp={mode === "colors" ? releaseDistortion : undefined}
-          onPointerCancel={mode === "colors" ? releaseDistortion : undefined}
+          onPointerUp={mode === "telepathic" ? releaseDistortion : undefined}
+          onPointerCancel={mode === "telepathic" ? releaseDistortion : undefined}
           onKeyDown={(event) => {
             if ((event.key === "Enter" || event.key === " ") && mode === "awaken") {
               event.preventDefault();
@@ -369,7 +369,7 @@ function App() {
                 ? "you found that"
                 : discovery === "blue"
                   ? "something moved underneath"
-                  : distorting && mode === "colors"
+                  : mode === "telepathic"
                     ? "something moved underneath"
                     : awake
                       ? "something heard you"
@@ -381,9 +381,9 @@ function App() {
               <span>Touch-to-Awaken</span>
               <small>Wake it gently.</small>
             </button>
-            <button type="button" className={mode === "colors" ? "is-selected" : ""} onClick={() => chooseMode("colors")}>
+            <button type="button" className={mode === "telepathic" ? "is-selected" : ""} onClick={() => chooseMode("colors")}>
               <span>Slide-for-Colors</span>
-              <small>Find what is underneath.</small>
+              <small>Think at it. See what happens.</small>
             </button>
             <button type="button" className={mode === "disturb" ? "is-selected" : ""} onClick={() => chooseMode("disturb")}>
               <span>Double-Tap-to-Disturb</span>
@@ -394,7 +394,7 @@ function App() {
 
         <div className="interface-bottom">
           <span>
-            {mode === "awaken" ? "TOUCH / CLICK" : mode === "colors" ? "SLIDE / REVEAL" : "TAP / TAP"}
+            {mode === "awaken" ? "TOUCH / CLICK" : mode === "telepathic" ? "MOVE / NOTICE" : "TAP / TAP"}
           </span>
 
           <button className="faq-button" type="button" onClick={() => setFaqOpen(true)}>
@@ -412,12 +412,12 @@ function App() {
         <span>
           {disturbCount > 0 && mode === "disturb"
             ? "DISTURBED"
-            : distorting && mode === "colors"
-              ? "COLOR SIGNAL"
+            : mode === "telepathic"
+              ? "SIGNAL RETURNED"
               : discovery === "pink"
-                ? "UNKNOWN STATE"
+                ? "CONNECTION ESTABLISHED"
                 : discovery === "blue"
-                  ? "HIDDEN LAYER"
+                  ? "CONNECTION ESTABLISHED"
                   : awake
                     ? "SIGNAL DETECTED"
                     : "STANDBY"}
