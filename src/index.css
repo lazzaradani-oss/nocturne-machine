@@ -186,9 +186,23 @@ button { font: inherit; }
   animation: orb-wake 1600ms cubic-bezier(.16,1,.3,1);
 }
 
+.machine.is-telepathic {
+  transform: translate3d(0,0,0);
+  transition: none;
+}
+
 .is-telepathic .machine-orb {
-  animation: telepathic-breathe 2200ms ease-in-out infinite;
-  transition: box-shadow 180ms ease, filter 180ms ease;
+  animation: none;
+  transform:
+    translate(
+      calc(-50% + var(--telepathy-x)),
+      calc(-50% + var(--telepathy-y))
+    )
+    scale(calc(1 + var(--telepathy-strength) * .055));
+  transition:
+    transform 180ms cubic-bezier(.16,1,.3,1),
+    box-shadow 180ms ease,
+    filter 180ms ease;
   box-shadow:
     0 0 calc(35px + var(--telepathy-strength) * 38px) rgba(217,167,255,.58),
     0 0 calc(90px + var(--telepathy-strength) * 70px) rgba(159,73,203,.4),
