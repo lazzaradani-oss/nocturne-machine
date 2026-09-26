@@ -448,6 +448,28 @@ button { font: inherit; }
   opacity: .42;
 }
 
+.bottom-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: auto;
+}
+
+.sound-button {
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  color: #f7eff9;
+  background: transparent;
+  cursor: pointer;
+  font-size: 8px;
+  letter-spacing: .2em;
+  opacity: .5;
+}
+
+.sound-button:hover,
+.sound-button[aria-pressed="true"] { opacity: 1; }
+
 .faq-button {
   min-height: 44px;
   padding: 0 10px;
@@ -648,6 +670,9 @@ button { font: inherit; }
 
   .mode-switcher span { font-size: 7px; letter-spacing: .08em; }
   .mode-switcher small { font-size: 7px; letter-spacing: .04em; }
+
+  .bottom-controls { gap: 2px; }
+  .sound-button, .faq-button { padding: 0 7px; font-size: 7px; }
 
   .status {
     right: 16px;
