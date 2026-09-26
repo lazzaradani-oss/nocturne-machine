@@ -410,8 +410,8 @@ function App() {
       <div className="status">
         <span className="status-dot" />
         <span>
-          {disturbCount >= 3 && mode === "disturb"
-            ? "NO RESPONSE"
+          {disturbCount > 0 && mode === "disturb"
+            ? "DISTURBED"
             : distorting && mode === "colors"
               ? "COLOR SIGNAL"
               : discovery === "pink"
