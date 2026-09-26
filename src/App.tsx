@@ -87,6 +87,7 @@ function App() {
   const telepathyWasNear = useRef(false);
   const telepathyLastAngle = useRef<number | null>(null);
   const telepathyOrbitCount = useRef(0);
+  const telepathyZone = useRef(0);
   const lastPointer = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -103,64 +104,87 @@ function App() {
         );
         lastPointer.current = { x: event.clientX, y: event.clientY };
 
-        const orb = document.querySelector(".machine-orb");
-        if (!orb) return;
+        const machine = document.querySelector(".machine");
+        if (!machine) return;
 
-        const rect = orb.getBoundingClientRect();
+        const rect = machine.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
         const centerY = rect.top + rect.height / 2;
         const dx = event.clientX - centerX;
         const dy = event.clientY - centerY;
         const distance = Math.hypot(dx, dy);
-        const influence = Math.max(0, Math.min(1, 1 - distance / (rect.width * 1.8)));
-        const near = distance < rect.width * 1.25;
+        const radius = rect.width * 0.5;
+
+        const influence = Math.max(0, Math.min(1, 1 - distance / (radius * 2.7)));
+        const zone =
+          distance < radius * 0.72
+            ? 4
+            : distance < radius * 1.15
+              ? 3
+              : distance < radius * 1.8
+                ? 2
+                : distance < radius * 2.7
+                  ? 1
+                  : 0;
 
         setTelepathyPull({
-          x: Math.max(-1, Math.min(1, dx / (rect.width * 1.2))),
-          y: Math.max(-1, Math.min(1, dy / (rect.height * 1.2))),
+          x: Math.max(-1, Math.min(1, dx / (radius * 2.2))),
+          y: Math.max(-1, Math.min(1, dy / (radius * 2.2))),
           strength: influence,
         });
 
-        if (!near) {
+        if (zone !== telepathyZone.current) {
+          telepathyZone.current = zone;
+
+          const zoneMessages: Record<number, string> = {
+            0: "I can't feel you.",
+            1: "I know you're there.",
+            2: "closer.",
+            3: "there you are.",
+            4: "oh. you're very close.",
+          };
+
+          if (zone > 0) {
+            setTelepathyLevel((level) => Math.max(level, zone));
+          }
+          setTelepathyMessage(zoneMessages[zone]);
+        }
+
+        if (zone === 0) {
           telepathyWasNear.current = false;
           telepathyLastAngle.current = null;
-          if (influence === 0) setTelepathyPull({ x: 0, y: 0, strength: 0 });
           return;
         }
 
         const angle = Math.atan2(dy, dx);
+
         if (telepathyLastAngle.current !== null) {
           let angleDelta = Math.abs(angle - telepathyLastAngle.current);
           if (angleDelta > Math.PI) angleDelta = Math.PI * 2 - angleDelta;
-          if (angleDelta > 0.16 && movement > 4) telepathyOrbitCount.current += 1;
+
+          if (angleDelta > 0.18 && movement > 3) {
+            telepathyOrbitCount.current += 1;
+          }
         }
+
         telepathyLastAngle.current = angle;
 
         if (!telepathyWasNear.current) {
           telepathyWasNear.current = true;
           telepathyNearCount.current += 1;
-          setTelepathyMessage(
-            telepathyNearCount.current === 1
-              ? "you came closer."
-              : telepathyNearCount.current === 2
-                ? "there you are."
-                : "I knew you'd come back.",
-          );
         }
 
-        if (telepathyOrbitCount.current >= 6) {
-          setTelepathyLevel(5);
+        if (telepathyOrbitCount.current >= 8 && zone >= 2) {
+          setTelepathyLevel(6);
           setTelepathyMessage("you're going in circles.");
-        } else if (movement > 20) {
-          setTelepathyLevel((level) => Math.max(level, 3));
-          setTelepathyMessage("slow down.");
-        } else if (influence > 0.72) {
-          setTelepathyLevel((level) => Math.max(level, 2));
+        } else if (movement > 35 && zone >= 2) {
+          setTelepathyLevel((level) => Math.max(level, 5));
+          setTelepathyMessage("slow down. I can't follow that fast.");
+        } else if (zone === 4) {
+          setTelepathyLevel((level) => Math.max(level, 4));
           setTelepathyMessage("I can feel you.");
-        } else {
-          setTelepathyLevel((level) => Math.max(level, 1));
         }
-      }
+      }}
     };
 
     window.addEventListener("pointermove", handlePointerMove);
@@ -260,13 +284,14 @@ function App() {
     telepathyWasNear.current = false;
     telepathyLastAngle.current = null;
     telepathyOrbitCount.current = 0;
+    telepathyZone.current = 0;
     setDisturbCount(0);
     setAwake(false);
     setMachineComment(
       nextMode === "awaken"
         ? "approach it. see what happens."
         : nextMode === "telepathic"
-          ? "think at it. see what happens."
+          ? ""
           : "go ahead. knock.",
     );
   };
@@ -326,7 +351,7 @@ function App() {
             mode === "awaken"
               ? "Touch to awaken the Nocturne Machine"
               : mode === "telepathic"
-                ? "Slide across the orb to reveal hidden colors"
+                ? "Move your cursor near the orb to establish a telepathic connection"
                 : "Tap the orb twice to disturb it"
           }
           onPointerDown={handleOrbPointerDown}
@@ -366,12 +391,9 @@ function App() {
           </h1>
 
           <div className={`machine-message ${awake ? "message-awake" : ""}`}>
-            {machineComment ||
-              (mode === "telepathic" && telepathyMessage
-                ? telepathyMessage
-                : awake
-                  ? "something heard you"
-                  : "approach it. see what happens.")}
+            {mode === "telepathic"
+              ? telepathyMessage || "move closer. see what happens."
+              : machineComment || (awake ? "something heard you" : "approach it. see what happens.")}
           </div>
 
           <div className="mode-switcher" aria-label="Interaction mode">
