@@ -11,7 +11,7 @@ type Particle = {
   drift: number;
 };
 
-type Mode = "awaken" | "distort";
+type Mode = "awaken" | "colors" | "distort";
 
 const particles: Particle[] = Array.from(
   { length: 60 },
@@ -38,14 +38,14 @@ const faqItems = [
       "Start with Touch-to-Awaken. Touch or click the orb and see how it responds.",
   },
   {
-    question: "What is Drag-to-Distort?",
+    question: "What is Slide-for-Colors?",
     answer:
-      "A discovery interaction that lets you manipulate the orb like liquid or smoke.",
+      "A discovery interaction that lets you uncover colors hidden beneath the orb—first cold blue, then, more rarely, strange pink.",
   },
   {
-    question: "Why does the orb change color?",
+    question: "What is Drag-to-Distort?",
     answer:
-      "The colors represent different states of interaction. Deeper interaction can reveal colors hidden beneath the surface—including cold blue and, rarely, strange pink.",
+      "A discovery interaction that lets you manipulate the orb like liquid or smoke. The surface bends, stretches, and slowly pulls itself back together.",
   },
   {
     question: "Is it a game?",
@@ -55,7 +55,7 @@ const faqItems = [
   {
     question: "Could this interaction system be used elsewhere?",
     answer:
-      "Yes. The exact same interaction system could become a reusable mechanic for games, animation, and interactive storytelling. Touch-to-Awaken could activate objects, characters, memories, or environments, while Drag-to-Distort could become a mechanic for manipulating matter, reality, memories, or space.",
+      "Yes. The exact same interaction system could become a reusable mechanic for games, animation, and interactive storytelling. Touch-to-Awaken could activate objects, characters, memories, or environments, while Slide-for-Colors and Drag-to-Distort could become mechanics for revealing and manipulating matter, reality, memories, or space.",
   },
   {
     question: "What was the idea behind it?",
@@ -89,7 +89,7 @@ function App() {
 
       setPointer({ x: normalizedX, y: normalizedY });
 
-      if (mode === "distort" && distorting) {
+      if ((mode === "colors" || mode === "distort") && distorting) {
         const delta = Math.hypot(
           event.clientX - lastPoint.current.x,
           event.clientY - lastPoint.current.y,
@@ -103,9 +103,9 @@ function App() {
         });
 
         const elapsed = Date.now() - dragStart.current;
-        if (elapsed > 850) {
+        if (mode === "colors" && elapsed > 850) {
           setDiscovery("pink");
-        } else if (elapsed > 280) {
+        } else if (mode === "colors" && elapsed > 280) {
           setDiscovery("blue");
         }
       }
@@ -142,7 +142,7 @@ function App() {
   };
 
   const handleOrbPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (mode !== "distort" || !distorting) return;
+    if ((mode !== "colors" && mode !== "distort") || !distorting) return;
 
     const rect = event.currentTarget.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
@@ -160,9 +160,9 @@ function App() {
     });
 
     const elapsed = Date.now() - dragStart.current;
-    if (elapsed > 850) {
+    if (mode === "colors" && elapsed > 850) {
       setDiscovery("pink");
-    } else if (elapsed > 280) {
+    } else if (mode === "colors" && elapsed > 280) {
       setDiscovery("blue");
     }
   };
@@ -195,7 +195,8 @@ function App() {
 
   const machineClass = [
     "machine",
-    distorting ? "is-distorting" : "",
+    mode === "distort" && distorting ? "is-distorting" : "",
+    mode === "colors" && distorting ? "is-sliding-colors" : "",
     discovery === "blue" ? "has-blue-discovery" : "",
     discovery === "pink" ? "has-pink-discovery" : "",
   ]
@@ -240,7 +241,9 @@ function App() {
           aria-label={
             mode === "awaken"
               ? "Touch to awaken the Nocturne Machine"
-              : "Drag across the orb to distort it"
+              : mode === "colors"
+                ? "Slide across the orb to reveal hidden colors"
+                : "Drag across the orb to distort it"
           }
           onPointerDown={handleOrbPointerDown}
           onPointerMove={handleOrbPointerMove}
@@ -254,6 +257,9 @@ function App() {
           }}
         >
           <div className="distortion-field" />
+          <div className="liquid-tendrils" aria-hidden="true">
+            <span /><span /><span /><span /><span /><span />
+          </div>
           <div className="machine-orb-surface" />
           <div className="machine-core" />
           <div className="machine-highlight" />
@@ -303,6 +309,14 @@ function App() {
             </button>
             <button
               type="button"
+              className={mode === "colors" ? "is-selected" : ""}
+              onClick={() => chooseMode("colors")}
+            >
+              <span>Slide-for-Colors</span>
+              <small>Find what is underneath.</small>
+            </button>
+            <button
+              type="button"
               className={mode === "distort" ? "is-selected" : ""}
               onClick={() => chooseMode("distort")}
             >
@@ -313,7 +327,7 @@ function App() {
         </div>
 
         <div className="interface-bottom">
-          <span>{mode === "awaken" ? "TOUCH / CLICK" : "DRAG / DISTORT"}</span>
+          <span>{mode === "awaken" ? "TOUCH / CLICK" : mode === "colors" ? "SLIDE / REVEAL" : "DRAG / DISTORT"}</span>
 
           <button
             className="faq-button"
@@ -332,8 +346,11 @@ function App() {
       <div className="status">
         <span className="status-dot" />
         <span>
-          {distorting
+          {distorting && mode === "distort"
             ? "DISTORTING"
+            : distorting && mode === "colors"
+              ? "COLOR SIGNAL"
+            : discovery === "pink"
             : discovery === "pink"
               ? "UNKNOWN STATE"
               : discovery === "blue"
