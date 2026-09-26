@@ -184,7 +184,7 @@ function App() {
           setTelepathyLevel((level) => Math.max(level, 4));
           setTelepathyMessage("I can feel you.");
         }
-      }}
+      }
     };
 
     window.addEventListener("pointermove", handlePointerMove);
