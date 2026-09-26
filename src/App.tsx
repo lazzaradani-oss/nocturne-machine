@@ -268,7 +268,7 @@ function App() {
     }
 
     if (mode === "telepathic") {
-      setMachineComment(telepathyMessage || "I felt that.");
+      setTelepathyMessage(telepathyMessage || "I felt that.");
       return;
     }
   };
