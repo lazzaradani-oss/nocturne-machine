@@ -76,10 +76,10 @@ export const startListeningSound = async (intensity = 0) => {
   }
 
   const now = audio.context.currentTime;
-  const level = Math.min(0.055, 0.018 + intensity * 0.006);
+  const level = Math.min(0.075, 0.035 + intensity * 0.006);
 
   audio.master.gain.cancelScheduledValues(now);
-  audio.master.gain.setTargetAtTime(level, now, 0.18);
+  audio.master.gain.setTargetAtTime(level, now, 0.12);
 
   audio.base.frequency.cancelScheduledValues(now);
   audio.base.frequency.setTargetAtTime(108 + intensity * 4, now, 0.4);
@@ -91,7 +91,7 @@ export const startListeningSound = async (intensity = 0) => {
 
   audio.noiseGain.gain.cancelScheduledValues(now);
   audio.noiseGain.gain.setTargetAtTime(
-    Math.min(0.012, intensity >= 6 ? 0.008 : 0.003 + intensity * 0.0007),
+    Math.min(0.015, intensity >= 6 ? 0.01 : 0.004 + intensity * 0.0008),
     now,
     0.6,
   );
@@ -104,9 +104,9 @@ export const stopListeningSound = () => {
 
   const now = nodes.context.currentTime;
   nodes.master.gain.cancelScheduledValues(now);
-  nodes.master.gain.setTargetAtTime(0.0001, now, 0.45);
+  nodes.master.gain.setTargetAtTime(0.0001, now, 0.35);
   nodes.noiseGain.gain.cancelScheduledValues(now);
-  nodes.noiseGain.gain.setTargetAtTime(0.0001, now, 0.35);
+  nodes.noiseGain.gain.setTargetAtTime(0.0001, now, 0.3);
 };
 
 export const isAudioSupported = () => {
