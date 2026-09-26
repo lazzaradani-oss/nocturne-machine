@@ -186,7 +186,7 @@ button { font: inherit; }
   animation: orb-wake 1600ms cubic-bezier(.16,1,.3,1);
 }
 
-.is-sliding-colors .machine-orb {
+.is-distorting .machine-orb {
   transform: translate(calc(-50% + var(--distort-x) * .12),calc(-50% + var(--distort-y) * .12)) scale(calc(1 + var(--distort-strength) * .08));
   border-radius: calc(50% - var(--distort-strength) * 12%);
   filter: saturate(calc(1 + var(--distort-strength) * .55));
