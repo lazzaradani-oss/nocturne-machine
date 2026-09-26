@@ -68,26 +68,31 @@ const playWakeTone = (audio: AudioNodes) => {
   const oscillator = audio.context.createOscillator();
   const gain = audio.context.createGain();
 
-  oscillator.type = "sine";
+  oscillator.type = "triangle";
   oscillator.frequency.setValueAtTime(440, now);
-  oscillator.frequency.exponentialRampToValueAtTime(330, now + 0.16);
+  oscillator.frequency.exponentialRampToValueAtTime(330, now + 0.18);
 
   gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(0.055, now + 0.025);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+  gain.gain.exponentialRampToValueAtTime(0.09, now + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
 
   oscillator.connect(gain);
   gain.connect(audio.context.destination);
   oscillator.start(now);
-  oscillator.stop(now + 0.24);
+  oscillator.stop(now + 0.3);
 };
 
 export const startListeningSound = async (intensity = 0) => {
   const audio = getAudioContext();
   if (!audio) return;
 
-  const resumePromise =
-    audio.context.state === "suspended" ? audio.context.resume() : Promise.resolve();
+  try {
+    if (audio.context.state !== "running") {
+      await audio.context.resume();
+    }
+  } catch {
+    return;
+  }
 
   const now = audio.context.currentTime;
   const level = Math.min(0.085, 0.055 + intensity * 0.006);
@@ -114,12 +119,6 @@ export const startListeningSound = async (intensity = 0) => {
 
   if (intensity === 0) {
     playWakeTone(audio);
-  }
-
-  try {
-    await resumePromise;
-  } catch {
-    // The browser may deny audio until another user gesture.
   }
 };
 
