@@ -24,8 +24,6 @@ body {
 button { font: inherit; }
 
 .nocturne {
-  --discovery-blue: #8bd7ff;
-  --discovery-pink: #ff91c8;
   position: relative;
   width: 100%;
   min-height: 100vh;
@@ -332,33 +330,48 @@ button { font: inherit; }
 }
 
 
-.distortion-field {
+.distortion-field { display: none; }
+
+.liquid-tendrils {
   position: absolute;
-  inset: -14%;
-  border-radius: 50%;
-  opacity: 0;
-  background: radial-gradient(ellipse at calc(50% + var(--distort-x) * .45) calc(50% + var(--distort-y) * .45), rgba(255,255,255,.34) 0%, rgba(139,215,255,.13) 18%, rgba(255,145,200,.08) 34%, transparent 68%);
-  filter: blur(7px);
-  mix-blend-mode: screen;
-  transform: scale(calc(1 + var(--distort-strength) * .18));
+  inset: -24%;
   pointer-events: none;
-  transition: opacity 180ms ease, transform 120ms ease;
+  opacity: 0;
+  filter: blur(7px);
+  transition: opacity 180ms ease;
 }
 
-.is-listening .distortion-field, .is-disturbing .distortion-field { opacity: .9; }
+.liquid-tendrils span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 28%;
+  height: 7%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(217,167,255,0), rgba(217,167,255,.65), rgba(217,167,255,.12), rgba(217,167,255,0));
+  transform-origin: left center;
+  mix-blend-mode: screen;
+}
 
-.liquid-tendrils { position:absolute; inset:-24%; pointer-events:none; opacity:0; filter:blur(7px); transform:translate3d(var(--distort-x),var(--distort-y),0); transition:opacity 180ms ease, transform 90ms linear; }
-.liquid-tendrils span { position:absolute; left:50%; top:50%; width:28%; height:7%; border-radius:999px; background:linear-gradient(90deg,rgba(217,167,255,0),rgba(217,167,255,.65),rgba(139,215,255,.18),rgba(217,167,255,0)); transform-origin:left center; mix-blend-mode:screen; }
 .liquid-tendrils span:nth-child(1){transform:rotate(-18deg) translateX(18px) scaleX(1.5);}
 .liquid-tendrils span:nth-child(2){transform:rotate(34deg) translateX(12px) scaleX(1.2);}
 .liquid-tendrils span:nth-child(3){transform:rotate(92deg) translateX(20px) scaleX(1.35);}
 .liquid-tendrils span:nth-child(4){transform:rotate(151deg) translateX(15px) scaleX(1.1);}
 .liquid-tendrils span:nth-child(5){transform:rotate(218deg) translateX(24px) scaleX(1.45);}
 .liquid-tendrils span:nth-child(6){transform:rotate(286deg) translateX(13px) scaleX(1.2);}
-.is-listening .liquid-tendrils, .is-disturbing .liquid-tendrils { opacity:calc(.18 + var(--distort-strength) * .35); }
-.is-listening .liquid-tendrils span { animation: liquid-pull 1600ms ease-in-out infinite alternate; } .is-disturbing .liquid-tendrils span { animation: liquid-pull 500ms ease-in-out infinite alternate; }
-@keyframes liquid-pull { from{filter:blur(5px);opacity:.45;} to{filter:blur(11px);opacity:.9;transform-origin:left center;} }
 
+.is-disturbing .liquid-tendrils {
+  opacity: .55;
+}
+
+.is-disturbing .liquid-tendrils span {
+  animation: liquid-pull 500ms ease-in-out infinite alternate;
+}
+
+@keyframes liquid-pull {
+  from { filter: blur(5px); opacity: .45; }
+  to { filter: blur(11px); opacity: .9; }
+}
 
 .machine-orb-surface {
   position: absolute;
@@ -491,16 +504,10 @@ button { font: inherit; }
 }
 
 .message-awake,
-.is-listening .machine-message, .is-disturbing .machine-message, .is-sliding-colors .machine-message { opacity: 1; letter-spacing: .28em; text-shadow: 0 0 20px rgba(217,167,255,.45); }
-.is-sliding-colors.has-blue-discovery .machine-message { text-shadow: 0 0 20px rgba(139,215,255,.4); }
-.is-sliding-colors.has-pink-discovery .machine-message { text-shadow: 0 0 22px rgba(255,145,200,.45); }
-
-.mode-switcher {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 24px;
-  pointer-events: auto;
+.is-disturbing .machine-message {
+  opacity: 1;
+  letter-spacing: .28em;
+  text-shadow: 0 0 20px rgba(217,167,255,.45);
 }
 
 .mode-switcher button {
@@ -606,17 +613,7 @@ button { font: inherit; }
 .is-disturbing .status,
 .is-discovering .status { opacity: .85; }
 
-.has-blue-discovery .status-dot { background: var(--discovery-blue); box-shadow: 0 0 12px rgba(139,215,255,.8); }
-.has-pink-discovery .status-dot { background: var(--discovery-pink); box-shadow: 0 0 14px rgba(255,145,200,.85); }
 
-.wake-flash {
-  position: absolute;
-  inset: 0;
-  z-index: 20;
-  pointer-events: none;
-  background: radial-gradient(circle at 50% 50%, rgba(246,224,255,.22), rgba(159,73,203,.05) 35%, transparent 65%);
-  opacity: 0;
-}
 
 .is-awake .wake-flash { animation: wake-flash 1600ms ease-out; }
 
