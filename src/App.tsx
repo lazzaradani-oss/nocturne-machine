@@ -155,25 +155,44 @@ function App() {
 
     if (mode === "disturb") {
       tapCount.current += 1;
-      const currentTap = tapCount.current;
-      setDisturbCount(currentTap);
       setAwake(true);
       if (tapTimer.current) window.clearTimeout(tapTimer.current);
 
-      if (currentTap === 1) {
+      if (tapCount.current === 1) {
         setMachineComment("…");
-      } else if (currentTap === 2) {
-        setMachineComment("excuse me?");
       } else {
-        setMachineComment("why are you knocking?");
+        tapCount.current = 0;
+        setDisturbCount((count) => {
+          const nextCount = count + 1;
+          const responses = [
+            "excuse me?",
+            "why are you knocking?",
+            "we're not doing this.",
+            "that was unnecessarily loud.",
+            "please stop interrogating the orb.",
+            "it is pretending not to hear you.",
+            "you've made the situation worse.",
+            "this is becoming a little embarrassing.",
+            "the orb would like a word.",
+            "the orb has declined to comment.",
+            "that was your second warning.",
+            "you have officially disturbed the machine.",
+            "the machine is reconsidering this relationship.",
+            "you knocked. it remembers.",
+            "something on the other side is annoyed.",
+            "congratulations. now it's awkward.",
+            "the orb has requested boundaries.",
+            "you really thought that would help?",
+            "there is definitely something home.",
+            "okay. now you're just being nosy.",
+          ];
+          setMachineComment(responses[(nextCount - 1) % responses.length]);
+          return nextCount;
+        });
       }
 
       tapTimer.current = window.setTimeout(() => {
-        if (tapCount.current >= 3) {
-          setMachineComment("there is nobody home.");
-        }
         tapCount.current = 0;
-        setDisturbCount(0);
       }, 1100);
       return;
     }
