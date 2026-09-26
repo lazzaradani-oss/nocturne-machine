@@ -35,7 +35,7 @@ const faqItems = [
   {
     question: "How do I interact with it?",
     answer:
-      "Start with Touch-to-Awaken. Touch or click the orb and see how it responds.",
+      "Start with Touch-to-Awaken. Then try Telepathic Connection by moving your cursor near the orb and seeing whether it notices. Finally, try Double-Tap-to-Disturb.",
   },
   {
     question: "What is Telepathic Connection?",
@@ -53,14 +53,14 @@ const faqItems = [
       "A simple discovery interaction. Tap twice as if you're knocking on something that shouldn't be hollow. The machine gets increasingly suspicious.",
   },
   {
-    question: "Could this interaction system be used elsewhere?",
+    question: "Could these interactions be used elsewhere?",
     answer:
       "Yes. The exact same interaction system could become a reusable mechanic for games, animation, and interactive storytelling. Touch-to-Awaken could activate objects, characters, memories, or environments, while Slide-for-Colors could reveal hidden matter, memories, or space, and Double-Tap-to-Disturb could trigger hidden reactions or interruptions.",
   },
   {
     question: "What was the idea behind it?",
     answer:
-      "To create an interface that teaches you how it works through response rather than instruction.",
+      "To create an interface that teaches you how it works through response rather than instruction—and to see whether curiosity could become the reason someone keeps interacting.",
   },
   {
     question: "Why does it not explain everything?",
