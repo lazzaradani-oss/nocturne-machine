@@ -168,6 +168,7 @@ function App() {
       setAwake(true);
       setListenTime(0);
       setMachineComment("you're listening.");
+      if (soundEnabled) void startListeningSound(0);
       listenTimer.current = window.setInterval(() => {
         setListenTime((time) => {
           const next = time + 1;
