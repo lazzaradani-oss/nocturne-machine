@@ -73,19 +73,12 @@ function App() {
   const [pointer, setPointer] = useState({ x: 0, y: 0 });
   const [awake, setAwake] = useState(false);
   const [mode, setMode] = useState<Mode>("awaken");
-  const [distorting, setDistorting] = useState(false);
-  const [distortion, setDistortion] = useState({ x: 0, y: 0, strength: 0 });
-  const [discovery, setDiscovery] = useState<"none" | "blue" | "pink">("none");
-  const [faqOpen, setFaqOpen] = useState(false);
-  const [wakeCount, setWakeCount] = useState(0);
-  const [disturbCount, setDisturbCount] = useState(0);
-  const [machineComment, setMachineComment] = useState("");
-  const wakeTimer = useRef<number | null>(null);
-  const distortionTimer = useRef<number | null>(null);
-  const dragStart = useRef(0);
-  const lastPoint = useRef({ x: 0, y: 0 });
+  const [telepathyLevel, setTelepathyLevel] = useState(0);
+  const [telepathyMessage, setTelepathyMessage] = useState("");
   const tapTimer = useRef<number | null>(null);
   const tapCount = useRef(0);
+  const telepathyNearCount = useRef(0);
+  const lastPointer = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const handlePointerMove = (event: PointerEvent) => {
@@ -94,24 +87,22 @@ function App() {
 
       setPointer({ x: normalizedX, y: normalizedY });
 
-      if (mode === "telepathic" && distorting) {
-        const delta = Math.hypot(
-          event.clientX - lastPoint.current.x,
-          event.clientY - lastPoint.current.y,
-        );
-        lastPoint.current = { x: event.clientX, y: event.clientY };
-
-        setDistortion({
-          x: normalizedX * 115,
-          y: normalizedY * 115,
-          strength: Math.min(1, distortion.strength * 0.84 + delta / 90),
-        });
-
-        const elapsed = Date.now() - dragStart.current;
-        if (elapsed > 850) {
-          setDiscovery("pink");
-        } else if (elapsed > 280) {
-          setDiscovery("blue");
+      if (mode === "telepathic") {
+        const movement = Math.hypot(event.clientX - lastPointer.current.x, event.clientY - lastPointer.current.y);
+        lastPointer.current = { x: event.clientX, y: event.clientY };
+        if (movement > 6) {
+          const rect = document.querySelector(".machine-orb")?.getBoundingClientRect();
+          if (rect) {
+            const distance = Math.hypot(event.clientX - (rect.left + rect.width / 2), event.clientY - (rect.top + rect.height / 2));
+            if (distance < rect.width * 0.95) {
+              telepathyNearCount.current += 1;
+              const n = telepathyNearCount.current;
+              const responses = ["I felt that.","you're over there.","I can see you.","you came back.","you're getting predictable.","I knew you'd do that.","stop thinking so loudly.","wait. that wasn't what I expected.","you felt that too, didn't you?","I was waiting for you."];
+              const index = Math.min(responses.length - 1, Math.floor((n - 1) / 3));
+              setTelepathyLevel(Math.min(7, index + 1));
+              setTelepathyMessage(responses[index]);
+            }
+          }
         }
       }
     };
@@ -197,12 +188,10 @@ function App() {
       return;
     }
 
-    event.currentTarget.setPointerCapture(event.pointerId);
-    dragStart.current = Date.now();
-    lastPoint.current = { x: event.clientX, y: event.clientY };
-    setDistorting(true);
-    setDiscovery("none");
-    setMachineComment("you found the cold one");
+    if (mode === "telepathic") {
+      setMachineComment(telepathyMessage || "I felt that.");
+      return;
+    }
   };
 
   const handleOrbPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -248,16 +237,16 @@ function App() {
     if (tapTimer.current) window.clearTimeout(tapTimer.current);
     tapCount.current = 0;
     setMode(nextMode);
-    setDistorting(false);
-    setDistortion({ x: 0, y: 0, strength: 0 });
-    setDiscovery("none");
+    setTelepathyLevel(0);
+    setTelepathyMessage("");
+    telepathyNearCount.current = 0;
     setDisturbCount(0);
     setAwake(false);
     setMachineComment(
       nextMode === "awaken"
         ? "approach it. see what happens."
-        : nextMode === "colors"
-          ? "find what is underneath"
+        : nextMode === "telepathic"
+          ? "think at it. see what happens."
           : "go ahead. knock.",
     );
   };
@@ -273,9 +262,7 @@ function App() {
   const machineClass = [
     "machine",
     mode === "disturb" && awake ? "is-disturbing" : "",
-    mode === "telepathic" && distorting ? "is-sliding-colors" : "",
-    discovery === "blue" ? "has-blue-discovery" : "",
-    discovery === "pink" ? "has-pink-discovery" : "",
+    mode === "telepathic" && telepathyLevel > 0 ? "is-telepathic" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -323,10 +310,7 @@ function App() {
                 : "Tap the orb twice to disturb it"
           }
           onPointerDown={handleOrbPointerDown}
-          onPointerMove={handleOrbPointerMove}
-          onPointerUp={mode === "telepathic" ? releaseDistortion : undefined}
-          onPointerCancel={mode === "telepathic" ? releaseDistortion : undefined}
-          onKeyDown={(event) => {
+                    onKeyDown={(event) => {
             if ((event.key === "Enter" || event.key === " ") && mode === "awaken") {
               event.preventDefault();
               handleWake();
@@ -365,15 +349,11 @@ function App() {
 
           <div className={`machine-message ${awake ? "message-awake" : ""}`}>
             {machineComment ||
-              (discovery === "pink"
-                ? "you found that"
-                : discovery === "blue"
-                  ? "something moved underneath"
-                  : mode === "telepathic"
-                    ? "something moved underneath"
-                    : awake
-                      ? "something heard you"
-                      : "approach it. see what happens.")}
+              (mode === "telepathic" && telepathyMessage
+                ? telepathyMessage
+                : awake
+                  ? "something heard you"
+                  : "approach it. see what happens.")}
           </div>
 
           <div className="mode-switcher" aria-label="Interaction mode">
