@@ -77,6 +77,8 @@ function App() {
   const [distortion, setDistortion] = useState({ x: 0, y: 0, strength: 0 });
   const [discovery, setDiscovery] = useState<"none" | "blue" | "pink">("none");
   const [faqOpen, setFaqOpen] = useState(false);
+  const [wakeCount, setWakeCount] = useState(0);
+  const [machineComment, setMachineComment] = useState("");
   const wakeTimer = useRef<number | null>(null);
   const distortionTimer = useRef<number | null>(null);
   const dragStart = useRef(0);
@@ -125,6 +127,19 @@ function App() {
   const handleWake = () => {
     if (wakeTimer.current) window.clearTimeout(wakeTimer.current);
     setAwake(true);
+    setWakeCount((count) => {
+      const nextCount = count + 1;
+      if (nextCount === 2) {
+        setMachineComment("you found the stim button");
+      } else if (nextCount === 3) {
+        setMachineComment("you are still doing it");
+      } else if (nextCount >= 4) {
+        setMachineComment("this is now your entire personality");
+      } else {
+        setMachineComment("something heard you");
+      }
+      return nextCount;
+    });
     wakeTimer.current = window.setTimeout(() => setAwake(false), 1600);
   };
 
@@ -139,6 +154,11 @@ function App() {
     lastPoint.current = { x: event.clientX, y: event.clientY };
     setDistorting(true);
     setDiscovery("none");
+    if (mode === "distort") {
+      setMachineComment("you have entered the squish zone");
+    } else {
+      setMachineComment("you found the cold one");
+    }
   };
 
   const handleOrbPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -162,14 +182,19 @@ function App() {
     const elapsed = Date.now() - dragStart.current;
     if (mode === "colors" && elapsed > 850) {
       setDiscovery("pink");
+      setMachineComment("you found that");
     } else if (mode === "colors" && elapsed > 280) {
       setDiscovery("blue");
+      setMachineComment("you found the cold one");
     }
   };
 
   const releaseDistortion = () => {
     if (!distorting) return;
     setDistorting(false);
+    if (mode === "distort") {
+      setMachineComment("you can let go now");
+    }
 
     if (distortionTimer.current) window.clearTimeout(distortionTimer.current);
     distortionTimer.current = window.setTimeout(() => {
@@ -183,6 +208,13 @@ function App() {
     setDistorting(false);
     setDistortion({ x: 0, y: 0, strength: 0 });
     setDiscovery("none");
+    setMachineComment(
+      nextMode === "awaken"
+        ? "approach it. see what happens."
+        : nextMode === "colors"
+          ? "find what is underneath"
+          : "change its shape",
+    );
   };
 
   const rootStyle = {
@@ -287,17 +319,18 @@ function App() {
           </h1>
 
           <div className={`machine-message ${awake ? "message-awake" : ""}`}>
-            {discovery === "pink"
-              ? "you found that"
-              : discovery === "blue"
-                ? "something moved underneath"
-                : distorting && mode === "distort"
-                  ? "oh. you want to touch me differently"
-                  : distorting && mode === "colors"
-                    ? "something moved underneath"
-                  : awake
-                    ? "something heard you"
-                    : "approach it. see what happens."}
+            {machineComment ||
+              (discovery === "pink"
+                ? "you found that"
+                : discovery === "blue"
+                  ? "something moved underneath"
+                  : distorting && mode === "distort"
+                    ? "oh. you want to touch me differently"
+                    : distorting && mode === "colors"
+                      ? "something moved underneath"
+                      : awake
+                        ? "something heard you"
+                        : "approach it. see what happens.")}
           </div>
 
           <div className="mode-switcher" aria-label="Interaction mode">
@@ -352,14 +385,13 @@ function App() {
             ? "DISTORTING"
             : distorting && mode === "colors"
               ? "COLOR SIGNAL"
-            : discovery === "pink"
-            : discovery === "pink"
-              ? "UNKNOWN STATE"
-              : discovery === "blue"
-                ? "HIDDEN LAYER"
-                : awake
-                  ? "SIGNAL DETECTED"
-                  : "LISTENING"}
+              : discovery === "pink"
+                ? "UNKNOWN STATE"
+                : discovery === "blue"
+                  ? "HIDDEN LAYER"
+                  : awake
+                    ? "SIGNAL DETECTED"
+                    : "LISTENING"}
         </span>
       </div>
 
