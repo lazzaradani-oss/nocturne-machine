@@ -205,7 +205,7 @@ function App() {
 
   return (
     <main
-      className={`nocturne ${awake ? "is-awake" : ""} ${distorting ? "is-distorting" : ""} ${discovery !== "none" ? "is-discovering" : ""}`}
+      className={`nocturne ${awake ? "is-awake" : ""} ${mode === "distort" && distorting ? "is-distorting" : ""} ${discovery !== "none" ? "is-discovering" : ""}`}
       style={rootStyle}
     >
       <div className="atmosphere atmosphere-one" />
@@ -291,8 +291,10 @@ function App() {
               ? "you found that"
               : discovery === "blue"
                 ? "something moved underneath"
-                : distorting
+                : distorting && mode === "distort"
                   ? "oh. you want to touch me differently"
+                  : distorting && mode === "colors"
+                    ? "something moved underneath"
                   : awake
                     ? "something heard you"
                     : "approach it. see what happens."}
