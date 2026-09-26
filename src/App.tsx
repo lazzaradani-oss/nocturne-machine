@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
+import { isAudioSupported, startListeningSound, stopListeningSound } from "./nocturneAudio";
 
 type Particle = {
   id: number;
@@ -86,6 +87,7 @@ function App() {
   const [listenTime, setListenTime] = useState(0);
   const [disturbCount, setDisturbCount] = useState(0);
   const [machineComment, setMachineComment] = useState("");
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const wakeTimer = useRef<number | null>(null);
   const distortionTimer = useRef<number | null>(null);
   const dragStart = useRef(0);
@@ -131,6 +133,8 @@ function App() {
     return () => {
       if (wakeTimer.current) window.clearTimeout(wakeTimer.current);
       if (distortionTimer.current) window.clearTimeout(distortionTimer.current);
+      if (listenTimer.current) window.clearInterval(listenTimer.current);
+      stopListeningSound();
     };
   }, []);
 
@@ -167,6 +171,7 @@ function App() {
       listenTimer.current = window.setInterval(() => {
         setListenTime((time) => {
           const next = time + 1;
+          if (soundEnabled) void startListeningSound(next);
           if (next === 2) setMachineComment("stay.");
           if (next === 4) setMachineComment("longer.");
           if (next === 6) setMachineComment("oh. you heard that.");
@@ -216,6 +221,7 @@ function App() {
     if (mode !== "listen") return;
     if (listenTimer.current) window.clearInterval(listenTimer.current);
     listenTimer.current = null;
+    stopListeningSound();
     setListenTime(0);
     setAwake(false);
     setMachineComment("you can let go now");
@@ -262,6 +268,7 @@ function App() {
 
   const chooseMode = (nextMode: Mode) => {
     if (listenTimer.current) window.clearInterval(listenTimer.current);
+    stopListeningSound();
     if (tapTimer.current) window.clearTimeout(tapTimer.current);
     tapCount.current = 0;
     setMode(nextMode);
@@ -437,13 +444,30 @@ function App() {
         <div className="interface-bottom">
           <span>{mode === "awaken" ? "TOUCH / CLICK" : mode === "colors" ? "SLIDE / REVEAL" : mode === "listen" ? "HOLD / LISTEN" : "TAP / TAP"}</span>
 
-          <button
-            className="faq-button"
-            type="button"
-            onClick={() => setFaqOpen(true)}
-          >
-            FAQ
-          </button>
+          <div className="bottom-controls">
+            <button
+              className="sound-button"
+              type="button"
+              aria-pressed={soundEnabled}
+              aria-label={soundEnabled ? "Mute Nocturne Machine sound" : "Enable Nocturne Machine sound"}
+              onClick={() => {
+                setSoundEnabled((enabled) => {
+                  const next = !enabled;
+                  if (!next) stopListeningSound();
+                  return next;
+                });
+              }}
+            >
+              SOUND / {soundEnabled && isAudioSupported() ? "ON" : "OFF"}
+            </button>
+            <button
+              className="faq-button"
+              type="button"
+              onClick={() => setFaqOpen(true)}
+            >
+              FAQ
+            </button>
+          </div>
 
           <span>2026</span>
         </div>
