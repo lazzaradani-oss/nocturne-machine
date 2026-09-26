@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
-import { isAudioSupported, startListeningSound, stopListeningSound } from "./nocturneAudio";
 
 type Particle = {
   id: number;
@@ -46,7 +45,7 @@ const faqItems = [
   {
     question: "What is Hold-to-Listen?",
     answer:
-      "A discovery interaction that rewards staying with the machine. Press and hold the orb and its response changes the longer you listen.",
+      "A discovery interaction that rewards staying with the machine. Press and hold the orb and its response changes the longer you stay.",
   },
   {
     question: "Is it a game?",
@@ -87,7 +86,6 @@ function App() {
   const [listenTime, setListenTime] = useState(0);
   const [disturbCount, setDisturbCount] = useState(0);
   const [machineComment, setMachineComment] = useState("");
-  const [soundEnabled, setSoundEnabled] = useState(true);
   const wakeTimer = useRef<number | null>(null);
   const distortionTimer = useRef<number | null>(null);
   const dragStart = useRef(0);
@@ -103,7 +101,7 @@ function App() {
 
       setPointer({ x: normalizedX, y: normalizedY });
 
-      if ((mode === "colors") && distorting) {
+      if (mode === "colors" && distorting) {
         const delta = Math.hypot(
           event.clientX - lastPoint.current.x,
           event.clientY - lastPoint.current.y,
@@ -117,9 +115,9 @@ function App() {
         });
 
         const elapsed = Date.now() - dragStart.current;
-        if (mode === "colors" && elapsed > 850) {
+        if (elapsed > 850) {
           setDiscovery("pink");
-        } else if (mode === "colors" && elapsed > 280) {
+        } else if (elapsed > 280) {
           setDiscovery("blue");
         }
       }
@@ -134,7 +132,6 @@ function App() {
       if (wakeTimer.current) window.clearTimeout(wakeTimer.current);
       if (distortionTimer.current) window.clearTimeout(distortionTimer.current);
       if (listenTimer.current) window.clearInterval(listenTimer.current);
-      stopListeningSound();
     };
   }, []);
 
@@ -168,14 +165,12 @@ function App() {
       setAwake(true);
       setListenTime(0);
       setMachineComment("you're listening.");
-      if (soundEnabled) void startListeningSound(0);
       listenTimer.current = window.setInterval(() => {
         setListenTime((time) => {
           const next = time + 1;
-          if (soundEnabled) void startListeningSound(next);
           if (next === 2) setMachineComment("stay.");
           if (next === 4) setMachineComment("longer.");
-          if (next === 6) setMachineComment("oh. you heard that.");
+          if (next === 6) setMachineComment("oh. you noticed that.");
           if (next >= 9) setMachineComment("you stayed.");
           return next;
         });
@@ -213,16 +208,13 @@ function App() {
     lastPoint.current = { x: event.clientX, y: event.clientY };
     setDistorting(true);
     setDiscovery("none");
-    if (mode === "colors") {
-      setMachineComment("you found the cold one");
-    }
+    setMachineComment("you found the cold one");
   };
 
   const handleOrbPointerUp = () => {
     if (mode !== "listen") return;
     if (listenTimer.current) window.clearInterval(listenTimer.current);
     listenTimer.current = null;
-    stopListeningSound();
     setListenTime(0);
     setAwake(false);
     setMachineComment("you can let go now");
@@ -247,10 +239,10 @@ function App() {
     });
 
     const elapsed = Date.now() - dragStart.current;
-    if (mode === "colors" && elapsed > 850) {
+    if (elapsed > 850) {
       setDiscovery("pink");
       setMachineComment("you found that");
-    } else if (mode === "colors" && elapsed > 280) {
+    } else if (elapsed > 280) {
       setDiscovery("blue");
       setMachineComment("you found the cold one");
     }
@@ -269,7 +261,6 @@ function App() {
 
   const chooseMode = (nextMode: Mode) => {
     if (listenTimer.current) window.clearInterval(listenTimer.current);
-    stopListeningSound();
     if (tapTimer.current) window.clearTimeout(tapTimer.current);
     tapCount.current = 0;
     setMode(nextMode);
@@ -278,6 +269,7 @@ function App() {
     setDiscovery("none");
     setListenTime(0);
     setDisturbCount(0);
+    setAwake(false);
     setMachineComment(
       nextMode === "awaken"
         ? "approach it. see what happens."
@@ -335,7 +327,7 @@ function App() {
         ))}
       </div>
 
-      <div className={machineClass} aria-hidden={false}>
+      <div className={machineClass}>
         <div className="machine-halo" />
         <div className="machine-aura" />
 
@@ -349,8 +341,8 @@ function App() {
               : mode === "colors"
                 ? "Slide across the orb to reveal hidden colors"
                 : mode === "listen"
-                ? "Press and hold the orb to listen"
-                : "Tap the orb twice to disturb it"
+                  ? "Press and hold the orb to stay with it"
+                  : "Tap the orb twice to disturb it"
           }
           onPointerDown={handleOrbPointerDown}
           onPointerMove={handleOrbPointerMove}
@@ -407,35 +399,19 @@ function App() {
           </div>
 
           <div className="mode-switcher" aria-label="Interaction mode">
-            <button
-              type="button"
-              className={mode === "awaken" ? "is-selected" : ""}
-              onClick={() => chooseMode("awaken")}
-            >
+            <button type="button" className={mode === "awaken" ? "is-selected" : ""} onClick={() => chooseMode("awaken")}>
               <span>Touch-to-Awaken</span>
               <small>Wake it gently.</small>
             </button>
-            <button
-              type="button"
-              className={mode === "colors" ? "is-selected" : ""}
-              onClick={() => chooseMode("colors")}
-            >
+            <button type="button" className={mode === "colors" ? "is-selected" : ""} onClick={() => chooseMode("colors")}>
               <span>Slide-for-Colors</span>
               <small>Find what is underneath.</small>
             </button>
-            <button
-              type="button"
-              className={mode === "listen" ? "is-selected" : ""}
-              onClick={() => chooseMode("listen")}
-            >
+            <button type="button" className={mode === "listen" ? "is-selected" : ""} onClick={() => chooseMode("listen")}>
               <span>Hold-to-Listen</span>
               <small>Stay with it.</small>
             </button>
-            <button
-              type="button"
-              className={mode === "disturb" ? "is-selected" : ""}
-              onClick={() => chooseMode("disturb")}
-            >
+            <button type="button" className={mode === "disturb" ? "is-selected" : ""} onClick={() => chooseMode("disturb")}>
               <span>Double-Tap-to-Disturb</span>
               <small>Knock twice.</small>
             </button>
@@ -443,32 +419,13 @@ function App() {
         </div>
 
         <div className="interface-bottom">
-          <span>{mode === "awaken" ? "TOUCH / CLICK" : mode === "colors" ? "SLIDE / REVEAL" : mode === "listen" ? "HOLD / LISTEN" : "TAP / TAP"}</span>
+          <span>
+            {mode === "awaken" ? "TOUCH / CLICK" : mode === "colors" ? "SLIDE / REVEAL" : mode === "listen" ? "HOLD / STAY" : "TAP / TAP"}
+          </span>
 
-          <div className="bottom-controls">
-            <button
-              className="sound-button"
-              type="button"
-              aria-pressed={soundEnabled}
-              aria-label={soundEnabled ? "Mute Nocturne Machine sound" : "Enable Nocturne Machine sound"}
-              onClick={() => {
-                setSoundEnabled((enabled) => {
-                  const next = !enabled;
-                  if (!next) stopListeningSound();
-                  return next;
-                });
-              }}
-            >
-              SOUND / {soundEnabled && isAudioSupported() ? "ON" : "OFF"}
-            </button>
-            <button
-              className="faq-button"
-              type="button"
-              onClick={() => setFaqOpen(true)}
-            >
-              FAQ
-            </button>
-          </div>
+          <button className="faq-button" type="button" onClick={() => setFaqOpen(true)}>
+            FAQ
+          </button>
 
           <span>2026</span>
         </div>
@@ -482,16 +439,16 @@ function App() {
           {disturbCount >= 3 && mode === "disturb"
             ? "NO RESPONSE"
             : mode === "listen" && awake
-              ? "LISTENING"
+              ? "STAYING"
               : distorting && mode === "colors"
                 ? "COLOR SIGNAL"
-              : discovery === "pink"
-                ? "UNKNOWN STATE"
-                : discovery === "blue"
-                  ? "HIDDEN LAYER"
-                  : awake
-                    ? "SIGNAL DETECTED"
-                    : "LISTENING"}
+                : discovery === "pink"
+                  ? "UNKNOWN STATE"
+                  : discovery === "blue"
+                    ? "HIDDEN LAYER"
+                    : awake
+                      ? "SIGNAL DETECTED"
+                      : "LISTENING"}
         </span>
       </div>
 
@@ -503,12 +460,7 @@ function App() {
                 <p className="faq-kicker">NOCTURNE MACHINE</p>
                 <h2 id="faq-title">A few things worth knowing.</h2>
               </div>
-              <button
-                type="button"
-                className="faq-close"
-                aria-label="Close FAQ"
-                onClick={() => setFaqOpen(false)}
-              >
+              <button type="button" className="faq-close" aria-label="Close FAQ" onClick={() => setFaqOpen(false)}>
                 ×
               </button>
             </div>
