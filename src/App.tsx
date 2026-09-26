@@ -75,6 +75,7 @@ function App() {
   const [mode, setMode] = useState<Mode>("awaken");
   const [telepathyLevel, setTelepathyLevel] = useState(0);
   const [telepathyMessage, setTelepathyMessage] = useState("");
+  const [telepathyPull, setTelepathyPull] = useState({ x: 0, y: 0, strength: 0 });
   const [faqOpen, setFaqOpen] = useState(false);
   const [wakeCount, setWakeCount] = useState(0);
   const [disturbCount, setDisturbCount] = useState(0);
@@ -83,6 +84,9 @@ function App() {
   const tapTimer = useRef<number | null>(null);
   const tapCount = useRef(0);
   const telepathyNearCount = useRef(0);
+  const telepathyWasNear = useRef(false);
+  const telepathyLastAngle = useRef<number | null>(null);
+  const telepathyOrbitCount = useRef(0);
   const lastPointer = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -93,21 +97,68 @@ function App() {
       setPointer({ x: normalizedX, y: normalizedY });
 
       if (mode === "telepathic") {
-        const movement = Math.hypot(event.clientX - lastPointer.current.x, event.clientY - lastPointer.current.y);
+        const movement = Math.hypot(
+          event.clientX - lastPointer.current.x,
+          event.clientY - lastPointer.current.y,
+        );
         lastPointer.current = { x: event.clientX, y: event.clientY };
-        if (movement > 6) {
-          const rect = document.querySelector(".machine-orb")?.getBoundingClientRect();
-          if (rect) {
-            const distance = Math.hypot(event.clientX - (rect.left + rect.width / 2), event.clientY - (rect.top + rect.height / 2));
-            if (distance < rect.width * 0.95) {
-              telepathyNearCount.current += 1;
-              const n = telepathyNearCount.current;
-              const responses = ["I felt that.","you're over there.","I can see you.","you came back.","you're getting predictable.","I knew you'd do that.","stop thinking so loudly.","wait. that wasn't what I expected.","you felt that too, didn't you?","I was waiting for you."];
-              const index = Math.min(responses.length - 1, Math.floor((n - 1) / 3));
-              setTelepathyLevel(Math.min(7, index + 1));
-              setTelepathyMessage(responses[index]);
-            }
-          }
+
+        const orb = document.querySelector(".machine-orb");
+        if (!orb) return;
+
+        const rect = orb.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const dx = event.clientX - centerX;
+        const dy = event.clientY - centerY;
+        const distance = Math.hypot(dx, dy);
+        const influence = Math.max(0, Math.min(1, 1 - distance / (rect.width * 1.8)));
+        const near = distance < rect.width * 1.25;
+
+        setTelepathyPull({
+          x: Math.max(-1, Math.min(1, dx / (rect.width * 1.2))),
+          y: Math.max(-1, Math.min(1, dy / (rect.height * 1.2))),
+          strength: influence,
+        });
+
+        if (!near) {
+          telepathyWasNear.current = false;
+          telepathyLastAngle.current = null;
+          if (influence === 0) setTelepathyPull({ x: 0, y: 0, strength: 0 });
+          return;
+        }
+
+        const angle = Math.atan2(dy, dx);
+        if (telepathyLastAngle.current !== null) {
+          let angleDelta = Math.abs(angle - telepathyLastAngle.current);
+          if (angleDelta > Math.PI) angleDelta = Math.PI * 2 - angleDelta;
+          if (angleDelta > 0.16 && movement > 4) telepathyOrbitCount.current += 1;
+        }
+        telepathyLastAngle.current = angle;
+
+        if (!telepathyWasNear.current) {
+          telepathyWasNear.current = true;
+          telepathyNearCount.current += 1;
+          setTelepathyMessage(
+            telepathyNearCount.current === 1
+              ? "you came closer."
+              : telepathyNearCount.current === 2
+                ? "there you are."
+                : "I knew you'd come back.",
+          );
+        }
+
+        if (telepathyOrbitCount.current >= 6) {
+          setTelepathyLevel(5);
+          setTelepathyMessage("you're going in circles.");
+        } else if (movement > 20) {
+          setTelepathyLevel((level) => Math.max(level, 3));
+          setTelepathyMessage("slow down.");
+        } else if (influence > 0.72) {
+          setTelepathyLevel((level) => Math.max(level, 2));
+          setTelepathyMessage("I can feel you.");
+        } else {
+          setTelepathyLevel((level) => Math.max(level, 1));
         }
       }
     };
@@ -204,7 +255,11 @@ function App() {
     setMode(nextMode);
     setTelepathyLevel(0);
     setTelepathyMessage("");
+    setTelepathyPull({ x: 0, y: 0, strength: 0 });
     telepathyNearCount.current = 0;
+    telepathyWasNear.current = false;
+    telepathyLastAngle.current = null;
+    telepathyOrbitCount.current = 0;
     setDisturbCount(0);
     setAwake(false);
     setMachineComment(
@@ -219,6 +274,9 @@ function App() {
   const rootStyle = {
     "--pointer-x": `${pointer.x * 34}px`,
     "--pointer-y": `${pointer.y * 34}px`,
+    "--telepathy-x": `${telepathyPull.x * 20}px`,
+    "--telepathy-y": `${telepathyPull.y * 20}px`,
+    "--telepathy-strength": telepathyPull.strength,
   } as CSSProperties;
 
   const machineClass = [
