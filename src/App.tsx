@@ -11,7 +11,7 @@ type Particle = {
   drift: number;
 };
 
-type Mode = "awaken" | "colors" | "distort";
+type Mode = "awaken" | "colors" | "listen" | "disturb";
 
 const particles: Particle[] = Array.from(
   { length: 60 },
@@ -43,9 +43,9 @@ const faqItems = [
       "A discovery interaction that lets you uncover colors hidden beneath the orb—first cold blue, then, more rarely, strange pink.",
   },
   {
-    question: "What is Drag-to-Distort?",
+    question: "What is Hold-to-Listen?",
     answer:
-      "A discovery interaction that lets you manipulate the orb like liquid or smoke. The surface bends, stretches, and slowly pulls itself back together.",
+      "A discovery interaction that rewards staying with the machine. Press and hold the orb and its response changes the longer you listen.",
   },
   {
     question: "Is it a game?",
@@ -53,9 +53,14 @@ const faqItems = [
       "Not exactly. It is a prototype of an interaction system that could become a mechanic for a game, animation, or interactive story.",
   },
   {
+    question: "What is Double-Tap-to-Disturb?",
+    answer:
+      "A simple discovery interaction. Tap twice as if you're knocking on something that shouldn't be hollow. The machine gets increasingly suspicious.",
+  },
+  {
     question: "Could this interaction system be used elsewhere?",
     answer:
-      "Yes. The exact same interaction system could become a reusable mechanic for games, animation, and interactive storytelling. Touch-to-Awaken could activate objects, characters, memories, or environments, while Slide-for-Colors and Drag-to-Distort could become mechanics for revealing and manipulating matter, reality, memories, or space.",
+      "Yes. The exact same interaction system could become a reusable mechanic for games, animation, and interactive storytelling. Touch-to-Awaken could activate objects, characters, memories, or environments, while Slide-for-Colors and Hold-to-Listen could become mechanics for revealing and sensing matter, reality, memories, or space, while Double-Tap-to-Disturb could trigger hidden reactions or interruptions.",
   },
   {
     question: "What was the idea behind it?",
@@ -78,11 +83,16 @@ function App() {
   const [discovery, setDiscovery] = useState<"none" | "blue" | "pink">("none");
   const [faqOpen, setFaqOpen] = useState(false);
   const [wakeCount, setWakeCount] = useState(0);
+  const [listenTime, setListenTime] = useState(0);
+  const [disturbCount, setDisturbCount] = useState(0);
   const [machineComment, setMachineComment] = useState("");
   const wakeTimer = useRef<number | null>(null);
   const distortionTimer = useRef<number | null>(null);
   const dragStart = useRef(0);
   const lastPoint = useRef({ x: 0, y: 0 });
+  const listenTimer = useRef<number | null>(null);
+  const tapTimer = useRef<number | null>(null);
+  const tapCount = useRef(0);
 
   useEffect(() => {
     const handlePointerMove = (event: PointerEvent) => {
@@ -91,7 +101,7 @@ function App() {
 
       setPointer({ x: normalizedX, y: normalizedY });
 
-      if ((mode === "colors" || mode === "distort") && distorting) {
+      if ((mode === "colors") && distorting) {
         const delta = Math.hypot(
           event.clientX - lastPoint.current.x,
           event.clientY - lastPoint.current.y,
@@ -149,20 +159,70 @@ function App() {
       return;
     }
 
+    if (mode === "listen") {
+      if (listenTimer.current) window.clearInterval(listenTimer.current);
+      setAwake(true);
+      setListenTime(0);
+      setMachineComment("you're listening.");
+      listenTimer.current = window.setInterval(() => {
+        setListenTime((time) => {
+          const next = time + 1;
+          if (next === 2) setMachineComment("stay.");
+          if (next === 4) setMachineComment("longer.");
+          if (next === 6) setMachineComment("oh. you heard that.");
+          if (next >= 9) setMachineComment("you stayed.");
+          return next;
+        });
+      }, 500);
+      return;
+    }
+
+    if (mode === "disturb") {
+      tapCount.current += 1;
+      const currentTap = tapCount.current;
+      setDisturbCount(currentTap);
+      setAwake(true);
+      if (tapTimer.current) window.clearTimeout(tapTimer.current);
+
+      if (currentTap === 1) {
+        setMachineComment("…");
+      } else if (currentTap === 2) {
+        setMachineComment("excuse me?");
+      } else {
+        setMachineComment("why are you knocking?");
+      }
+
+      tapTimer.current = window.setTimeout(() => {
+        if (tapCount.current >= 3) {
+          setMachineComment("there is nobody home.");
+        }
+        tapCount.current = 0;
+        setDisturbCount(0);
+      }, 1100);
+      return;
+    }
+
     event.currentTarget.setPointerCapture(event.pointerId);
     dragStart.current = Date.now();
     lastPoint.current = { x: event.clientX, y: event.clientY };
     setDistorting(true);
     setDiscovery("none");
-    if (mode === "distort") {
-      setMachineComment("you have entered the squish zone");
-    } else {
+    if (mode === "colors") {
       setMachineComment("you found the cold one");
     }
   };
 
+  const handleOrbPointerUp = () => {
+    if (mode !== "listen") return;
+    if (listenTimer.current) window.clearInterval(listenTimer.current);
+    listenTimer.current = null;
+    setListenTime(0);
+    setAwake(false);
+    setMachineComment("you can let go now");
+  };
+
   const handleOrbPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if ((mode !== "colors" && mode !== "distort") || !distorting) return;
+    if (mode !== "colors" || !distorting) return;
 
     const rect = event.currentTarget.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
@@ -192,9 +252,6 @@ function App() {
   const releaseDistortion = () => {
     if (!distorting) return;
     setDistorting(false);
-    if (mode === "distort") {
-      setMachineComment("you can let go now");
-    }
 
     if (distortionTimer.current) window.clearTimeout(distortionTimer.current);
     distortionTimer.current = window.setTimeout(() => {
@@ -204,16 +261,23 @@ function App() {
   };
 
   const chooseMode = (nextMode: Mode) => {
+    if (listenTimer.current) window.clearInterval(listenTimer.current);
+    if (tapTimer.current) window.clearTimeout(tapTimer.current);
+    tapCount.current = 0;
     setMode(nextMode);
     setDistorting(false);
     setDistortion({ x: 0, y: 0, strength: 0 });
     setDiscovery("none");
+    setListenTime(0);
+    setDisturbCount(0);
     setMachineComment(
       nextMode === "awaken"
         ? "approach it. see what happens."
         : nextMode === "colors"
           ? "find what is underneath"
-          : "change its shape",
+          : nextMode === "listen"
+            ? "stay with it."
+            : "go ahead. knock.",
     );
   };
 
@@ -227,7 +291,8 @@ function App() {
 
   const machineClass = [
     "machine",
-    mode === "distort" && distorting ? "is-distorting" : "",
+    mode === "listen" && awake ? "is-listening" : "",
+    mode === "disturb" && awake ? "is-disturbing" : "",
     mode === "colors" && distorting ? "is-sliding-colors" : "",
     discovery === "blue" ? "has-blue-discovery" : "",
     discovery === "pink" ? "has-pink-discovery" : "",
@@ -275,12 +340,14 @@ function App() {
               ? "Touch to awaken the Nocturne Machine"
               : mode === "colors"
                 ? "Slide across the orb to reveal hidden colors"
-                : "Drag across the orb to distort it"
+                : mode === "listen"
+                ? "Press and hold the orb to listen"
+                : "Tap the orb twice to disturb it"
           }
           onPointerDown={handleOrbPointerDown}
           onPointerMove={handleOrbPointerMove}
-          onPointerUp={releaseDistortion}
-          onPointerCancel={releaseDistortion}
+          onPointerUp={mode === "listen" ? handleOrbPointerUp : releaseDistortion}
+          onPointerCancel={mode === "listen" ? handleOrbPointerUp : releaseDistortion}
           onKeyDown={(event) => {
             if ((event.key === "Enter" || event.key === " ") && mode === "awaken") {
               event.preventDefault();
@@ -324,13 +391,11 @@ function App() {
                 ? "you found that"
                 : discovery === "blue"
                   ? "something moved underneath"
-                  : distorting && mode === "distort"
-                    ? "oh. you want to touch me differently"
-                    : distorting && mode === "colors"
-                      ? "something moved underneath"
-                      : awake
-                        ? "something heard you"
-                        : "approach it. see what happens.")}
+                  : distorting && mode === "colors"
+                    ? "something moved underneath"
+                    : awake
+                      ? "something heard you"
+                      : "approach it. see what happens.")}
           </div>
 
           <div className="mode-switcher" aria-label="Interaction mode">
@@ -352,17 +417,25 @@ function App() {
             </button>
             <button
               type="button"
-              className={mode === "distort" ? "is-selected" : ""}
-              onClick={() => chooseMode("distort")}
+              className={mode === "listen" ? "is-selected" : ""}
+              onClick={() => chooseMode("listen")}
             >
-              <span>Drag-to-Distort</span>
-              <small>Change its shape.</small>
+              <span>Hold-to-Listen</span>
+              <small>Stay with it.</small>
+            </button>
+            <button
+              type="button"
+              className={mode === "disturb" ? "is-selected" : ""}
+              onClick={() => chooseMode("disturb")}
+            >
+              <span>Double-Tap-to-Disturb</span>
+              <small>Knock twice.</small>
             </button>
           </div>
         </div>
 
         <div className="interface-bottom">
-          <span>{mode === "awaken" ? "TOUCH / CLICK" : mode === "colors" ? "SLIDE / REVEAL" : "DRAG / DISTORT"}</span>
+          <span>{mode === "awaken" ? "TOUCH / CLICK" : mode === "colors" ? "SLIDE / REVEAL" : mode === "listen" ? "HOLD / LISTEN" : "TAP / TAP"}</span>
 
           <button
             className="faq-button"
@@ -381,10 +454,12 @@ function App() {
       <div className="status">
         <span className="status-dot" />
         <span>
-          {distorting && mode === "distort"
-            ? "DISTORTING"
-            : distorting && mode === "colors"
-              ? "COLOR SIGNAL"
+          {disturbCount >= 3 && mode === "disturb"
+            ? "NO RESPONSE"
+            : mode === "listen" && awake
+              ? "LISTENING"
+              : distorting && mode === "colors"
+                ? "COLOR SIGNAL"
               : discovery === "pink"
                 ? "UNKNOWN STATE"
                 : discovery === "blue"
