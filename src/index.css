@@ -796,3 +796,24 @@ button { font: inherit; }
   }
 }
 
+/* INTERACTION CONTROLS — the interface is visually passive, but the mode
+   switcher must remain interactive on desktop and mobile. */
+.mode-switcher {
+  pointer-events: auto;
+  position: relative;
+  z-index: 20;
+}
+
+@media (max-width: 700px) {
+  .mode-switcher {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+    pointer-events: auto;
+  }
+
+  .mode-switcher button {
+    width: 100%;
+    cursor: pointer;
+  }
+}
