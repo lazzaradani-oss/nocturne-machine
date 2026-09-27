@@ -4,9 +4,3 @@
 
 [build.environment]
   NODE_VERSION = "20"
-
-# Keep Vite's client-side routes working when a project URL is refreshed directly.
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
